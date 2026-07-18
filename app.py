@@ -78,7 +78,10 @@ def home():
 
 @app.route("/login")
 def login():
-    return auth0.authorize_redirect(redirect_uri=os.getenv("AUTH0_CALLBACK_URL"))
+    return auth0.authorize_redirect(
+        redirect_uri=os.getenv("AUTH0_CALLBACK_URL"),
+        prompt="login",
+    )
 
 
 @app.route("/callback")
@@ -236,11 +239,7 @@ def debug_token():
 @app.route("/logout")
 def logout():
     session.clear()
-    return redirect(
-        f"https://{AUTH0_DOMAIN}/v2/logout?"
-        f"client_id={AUTH0_CLIENT_ID}&"
-        f"returnTo={url_for('home', _external=True)}"
-    )
+    return redirect(url_for("home"))
 
 
 if __name__ == "__main__":

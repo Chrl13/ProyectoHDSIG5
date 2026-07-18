@@ -11,19 +11,97 @@ body {
     background: var(--bg-body);
     color: var(--text-primary);
     -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+}
+
+.aurora-bg {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.aurora-blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(100px);
+    opacity: 0.35;
+    animation: auroraFloat 20s ease-in-out infinite alternate;
+}
+
+.aurora-blob:nth-child(1) {
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, var(--aurora-green), transparent 70%);
+    top: -15%;
+    left: -10%;
+    animation-duration: 18s;
+}
+
+.aurora-blob:nth-child(2) {
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, var(--aurora-purple), transparent 70%);
+    top: 40%;
+    right: -8%;
+    animation-duration: 22s;
+    animation-delay: -5s;
+}
+
+.aurora-blob:nth-child(3) {
+    width: 450px;
+    height: 450px;
+    background: radial-gradient(circle, var(--aurora-cyan), transparent 70%);
+    bottom: -10%;
+    left: 30%;
+    animation-duration: 25s;
+    animation-delay: -10s;
+}
+
+.aurora-blob:nth-child(4) {
+    width: 350px;
+    height: 350px;
+    background: radial-gradient(circle, var(--aurora-pink), transparent 70%);
+    top: 20%;
+    left: 50%;
+    animation-duration: 20s;
+    animation-delay: -7s;
+    opacity: 0.2;
+}
+
+@keyframes auroraFloat {
+    0% { transform: translate(0, 0) scale(1); }
+    25% { transform: translate(40px, -30px) scale(1.05); }
+    50% { transform: translate(-20px, 40px) scale(0.95); }
+    75% { transform: translate(30px, 20px) scale(1.08); }
+    100% { transform: translate(-30px, -20px) scale(1); }
+}
+
+.aurora-canvas {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
 }
 
 .main {
     flex: 1;
     margin-left: var(--sidebar-width);
     padding: 2.5rem 3rem;
+    position: relative;
+    z-index: 1;
 }
 
 .main h1 {
-    font-size: 1.5rem;
+    font-size: 1.6rem;
     font-weight: 700;
     margin-bottom: 0.25rem;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.03em;
+    background: var(--gradient-accent);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 .main .subtitle {
@@ -59,10 +137,10 @@ code {
 }
 
 ::-webkit-scrollbar-thumb {
-    background: var(--border);
+    background: rgba(100, 140, 255, 0.15);
     border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: var(--text-muted);
+    background: rgba(100, 140, 255, 0.3);
 }

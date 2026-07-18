@@ -6,10 +6,12 @@
 }
 
 .card {
-    background: var(--gradient-card);
+    background: var(--glass-bg);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
     padding: 1.5rem;
     border-radius: var(--radius);
-    border: 1px solid var(--border);
+    border: 1px solid var(--glass-border);
     transition: all var(--transition-normal);
     position: relative;
     overflow: hidden;
@@ -18,23 +20,26 @@
 .card::before {
     content: '';
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 2px;
-    background: var(--gradient-accent);
+    inset: 0;
+    border-radius: var(--radius);
+    padding: 1px;
+    background: linear-gradient(135deg, transparent, rgba(34, 211, 238, 0.15), rgba(167, 139, 250, 0.15), transparent);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
     opacity: 0;
     transition: opacity var(--transition-normal);
-}
-
-.card:hover {
-    border-color: var(--accent);
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-glow);
+    pointer-events: none;
 }
 
 .card:hover::before {
     opacity: 1;
+}
+
+.card:hover {
+    border-color: rgba(34, 211, 238, 0.2);
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-glow-accent);
 }
 
 .card .card-icon {
@@ -44,7 +49,7 @@
 }
 
 .card:hover .card-icon {
-    transform: scale(1.1);
+    transform: scale(1.15);
 }
 
 .card h3 {
@@ -67,35 +72,39 @@
 
 .badge-role {
     display: inline-block;
-    padding: 0.25rem 0.7rem;
+    padding: 0.25rem 0.75rem;
     border-radius: 20px;
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     font-weight: 700;
-    letter-spacing: 0.03em;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
 }
 
 .badge-role.admin {
-    background: var(--danger-dim);
+    background: rgba(251, 113, 133, 0.1);
     color: var(--danger);
-    border: 1px solid rgba(244, 63, 94, 0.2);
+    border: 1px solid rgba(251, 113, 133, 0.2);
+    box-shadow: 0 0 12px rgba(251, 113, 133, 0.08);
 }
 
 .badge-role.operator {
-    background: var(--info-dim);
-    color: #818cf8;
-    border: 1px solid rgba(99, 102, 241, 0.2);
+    background: rgba(167, 139, 250, 0.1);
+    color: var(--aurora-purple);
+    border: 1px solid rgba(167, 139, 250, 0.2);
+    box-shadow: 0 0 12px rgba(167, 139, 250, 0.08);
 }
 
 .badge-role.viewer {
-    background: var(--warning-dim);
-    color: var(--warning);
-    border: 1px solid rgba(251, 191, 36, 0.2);
+    background: rgba(34, 211, 238, 0.1);
+    color: var(--aurora-cyan);
+    border: 1px solid rgba(34, 211, 238, 0.2);
+    box-shadow: 0 0 12px rgba(34, 211, 238, 0.08);
 }
 
 table {
     width: 100%;
     border-collapse: collapse;
-    background: var(--bg-primary);
+    background: transparent;
     border-radius: var(--radius);
     overflow: hidden;
 }
@@ -107,21 +116,22 @@ th, td {
 }
 
 th {
-    background: var(--bg-secondary);
+    background: rgba(20, 25, 50, 0.5);
     color: var(--text-muted);
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
-    font-weight: 600;
+    letter-spacing: 0.1em;
+    font-weight: 700;
+    border-bottom: 1px solid var(--glass-border);
 }
 
 tr {
-    border-top: 1px solid var(--border);
+    border-bottom: 1px solid rgba(100, 120, 200, 0.06);
     transition: background var(--transition-fast);
 }
 
 tr:hover {
-    background: var(--bg-hover);
+    background: rgba(34, 211, 238, 0.03);
 }
 
 .empty-state {
@@ -133,19 +143,36 @@ tr:hover {
 .empty-state .icon {
     font-size: 2.5rem;
     margin-bottom: 0.75rem;
-    opacity: 0.5;
+    opacity: 0.4;
 }
 
 .panel {
-    background: var(--bg-primary);
+    background: var(--glass-bg);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
     padding: 1.5rem;
     border-radius: var(--radius);
-    border: 1px solid var(--border);
-    transition: border-color var(--transition-fast);
+    border: 1px solid var(--glass-border);
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+    position: relative;
+}
+
+.panel::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: var(--radius);
+    padding: 1px;
+    background: linear-gradient(135deg, rgba(34, 211, 238, 0.08), transparent, rgba(167, 139, 250, 0.08));
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
 }
 
 .panel:hover {
-    border-color: var(--border-glow);
+    border-color: rgba(100, 200, 255, 0.15);
+    box-shadow: 0 0 24px rgba(34, 211, 238, 0.04);
 }
 
 .panel + .panel {
@@ -168,29 +195,31 @@ tr:hover {
 
 .form-group label {
     display: block;
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     color: var(--text-muted);
     margin-bottom: 0.4rem;
-    font-weight: 500;
-    letter-spacing: 0.02em;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
 }
 
 .form-group input,
 .form-group select {
-    background: var(--bg-secondary);
-    border: 1px solid var(--border);
+    background: rgba(15, 20, 40, 0.6);
+    border: 1px solid var(--glass-border);
     color: var(--text-primary);
     padding: 0.6rem 0.85rem;
     border-radius: var(--radius-sm);
     font-size: 0.85rem;
     transition: all var(--transition-fast);
     outline: none;
+    backdrop-filter: blur(8px);
 }
 
 .form-group input:focus,
 .form-group select:focus {
     border-color: var(--accent);
-    box-shadow: 0 0 0 3px var(--accent-dim);
+    box-shadow: 0 0 0 3px var(--accent-dim), 0 0 16px rgba(34, 211, 238, 0.08);
 }
 
 .form-group input::placeholder {
@@ -205,7 +234,7 @@ tr:hover {
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
-    padding: 0.6rem 1.4rem;
+    padding: 0.65rem 1.5rem;
     border-radius: var(--radius-sm);
     font-size: 0.85rem;
     font-weight: 600;
@@ -221,7 +250,7 @@ tr:hover {
     content: '';
     position: absolute;
     inset: 0;
-    background: linear-gradient(rgba(255,255,255,0.1), transparent);
+    background: linear-gradient(rgba(255,255,255,0.08), transparent);
     opacity: 0;
     transition: opacity var(--transition-fast);
 }
@@ -231,7 +260,7 @@ tr:hover {
 }
 
 .btn:hover {
-    transform: translateY(-1px);
+    transform: translateY(-2px);
 }
 
 .btn:active {
@@ -241,15 +270,17 @@ tr:hover {
 .btn-primary {
     background: var(--gradient-accent);
     color: #fff;
+    box-shadow: 0 4px 16px rgba(34, 211, 238, 0.2);
 }
 
 .btn-primary:hover {
-    box-shadow: 0 4px 20px var(--accent-glow);
+    box-shadow: 0 6px 28px rgba(34, 211, 238, 0.3), 0 0 40px rgba(167, 139, 250, 0.1);
 }
 
 .btn-danger {
-    background: var(--danger);
+    background: linear-gradient(135deg, #fb7185, #f43f5e);
     color: #fff;
+    box-shadow: 0 4px 16px rgba(251, 113, 133, 0.2);
 }
 
 .info-list {
@@ -260,7 +291,7 @@ tr:hover {
 }
 
 .info-list dt {
-    color: var(--accent);
+    color: var(--aurora-cyan);
     font-weight: 600;
 }
 
@@ -274,10 +305,10 @@ tr:hover {
 }
 
 .role-desc {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     color: var(--text-muted);
     margin-top: 0.75rem;
-    line-height: 1.6;
+    line-height: 1.7;
 }
 
 .role-desc strong {
@@ -285,25 +316,31 @@ tr:hover {
 }
 
 .table-note {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     color: var(--text-muted);
     margin-top: 1rem;
-    line-height: 1.6;
+    line-height: 1.7;
 }
 
 .role-select {
-    background: var(--bg-secondary);
-    border: 1px solid var(--border);
+    background: rgba(15, 20, 40, 0.6);
+    border: 1px solid var(--glass-border);
     color: var(--text-primary);
-    padding: 0.4rem 0.6rem;
+    padding: 0.4rem 0.65rem;
     border-radius: var(--radius-sm);
     font-size: 0.8rem;
     cursor: pointer;
-    transition: border-color var(--transition-fast);
+    transition: all var(--transition-fast);
     outline: none;
+    backdrop-filter: blur(8px);
 }
 
 .role-select:focus {
     border-color: var(--accent);
-    box-shadow: 0 0 0 3px var(--accent-dim);
+    box-shadow: 0 0 0 3px var(--accent-dim), 0 0 12px rgba(34, 211, 238, 0.08);
+}
+
+.role-select option {
+    background: #0c0f1e;
+    color: var(--text-primary);
 }

@@ -16,6 +16,7 @@
     .nav-item {
         justify-content: center;
         padding: 0.8rem;
+        margin: 2px 4px;
     }
 
     .nav-item .icon {
@@ -29,5 +30,13 @@
 
     .form-group input[type="text"] {
         width: 100%;
+    }
+
+    .cards {
+        grid-template-columns: 1fr;
+    }
+
+    .home-card {
+        padding: 2rem;
     }
 }

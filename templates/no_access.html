@@ -3,26 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sin acceso</title>
+    <title>Sin acceso - ClimApp</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/variables.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
 </head>
 <body class="home-body">
+    <div class="aurora-bg">
+        <div class="aurora-blob"></div>
+        <div class="aurora-blob"></div>
+        <div class="aurora-blob"></div>
+        <div class="aurora-blob"></div>
+    </div>
+    <canvas class="aurora-canvas" id="aurora-canvas"></canvas>
+
     <div class="home-card">
-        <div class="card-icon" style="font-size:3rem; margin-bottom:1rem;">&#128274;</div>
-        <h1>Sin permisos</h1>
-        <p>No tienes acceso a esta secci&#243;n. Contacta al administrador.</p>
-        <a href="{{ url_for('dashboard') }}" class="btn btn-primary">Volver al Panel</a>
+        <div class="card-icon" style="font-size:3rem; margin-bottom:1rem; position:relative; z-index:1;">&#128274;</div>
+        <h1 style="position:relative; z-index:1;">Sin permisos</h1>
+        <p style="position:relative; z-index:1;">No tienes acceso a esta secci&#243;n. Contacta al administrador.</p>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-primary" style="position:relative; z-index:1;">Volver al Panel</a>
     </div>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const card = document.querySelector('.home-card');
             if (card) {
                 card.style.opacity = '0';
-                card.style.transform = 'translateY(20px) scale(0.96)';
-                card.style.transition = 'opacity 0.5s ease, transform 0.5s cubic-bezier(0.16, 1, 0.3, 1)';
+                card.style.transform = 'translateY(24px) scale(0.95)';
+                card.style.transition = 'opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)';
                 requestAnimationFrame(() => {
                     requestAnimationFrame(() => {
                         card.style.opacity = '1';
@@ -32,5 +40,6 @@
             }
         });
     </script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
 </html>
