@@ -7,9 +7,9 @@
 <div class="panel" style="margin-bottom:1.5rem;">
     <h3>Roles disponibles</h3>
     <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
-        <span class="badge-role admin">admin</span>
-        <span class="badge-role operator">operator</span>
-        <span class="badge-role viewer">viewer</span>
+        {% for r in all_roles %}
+        <span class="badge-role {{ r.name }}">{{ r.name }}</span>
+        {% endfor %}
     </div>
     <p class="role-desc">
         <strong>admin</strong>: acceso total &middot;
@@ -19,8 +19,8 @@
 </div>
 
 <div class="panel">
-    <h3>Usuarios registrados</h3>
-    <table>
+    <h3>Usuarios registrados ({{ all_users|length }})</h3>
+    <table id="users-table">
         <thead>
             <tr>
                 <th>Usuario</th>
@@ -30,17 +30,71 @@
             </tr>
         </thead>
         <tbody>
-            <tr>
-                <td>{{ user.get('name', '-') }}</td>
-                <td>{{ user.get('email', '-') }}</td>
-                <td>{% for r in roles %}<span class="badge-role {{ r }}">{{ r }}</span> {% else %}sin rol{% endfor %}</td>
-                <td>&#9998; Editar</td>
+            {% for u in all_users %}
+            <tr data-user-id="{{ u.id }}">
+                <td>
+                    <div style="display:flex; align-items:center; gap:0.5rem;">
+                        {% if u.picture %}
+                        <img src="{{ u.picture }}" alt="" width="28" height="28" style="border-radius:50%;">
+                        {% endif %}
+                        {{ u.name or '-' }}
+                    </div>
+                </td>
+                <td>{{ u.email }}</td>
+                <td>
+                    <span class="badge-role {{ u.role.name if u.role else 'viewer' }}">
+                        {{ u.role.name if u.role else 'viewer' }}
+                    </span>
+                </td>
+                <td>
+                    <select class="role-select" data-user-id="{{ u.id }}" data-current-role="{{ u.role_id }}">
+                        {% for r in all_roles %}
+                        <option value="{{ r.id }}" {% if r.id == u.role_id %}selected{% endif %}>
+                            {{ r.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </td>
             </tr>
+            {% endfor %}
         </tbody>
     </table>
-    <p class="table-note">
-        Para gestionar usuarios completa, integra el Management API de Auth0.<br>
-        Los roles se asignan en <code>app_metadata.roles</code> de cada usuario.
-    </p>
+    {% if not all_users %}
+    <div class="empty-state">
+        <div class="icon">&#128100;</div>
+        <p>No hay usuarios registrados a&#250;n.</p>
+    </div>
+    {% endif %}
 </div>
+
+<script>
+document.querySelectorAll('.role-select').forEach(select => {
+    select.addEventListener('change', async function() {
+        const userId = this.dataset.userId;
+        const roleId = this.value;
+        const row = this.closest('tr');
+        const badge = row.querySelector('.badge-role');
+
+        try {
+            const resp = await fetch(`/api/users/${userId}/role`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({role_id: parseInt(roleId)})
+            });
+            const data = await resp.json();
+            if (data.ok) {
+                badge.textContent = data.role;
+                badge.className = 'badge-role ' + data.role;
+                this.dataset.currentRole = roleId;
+            } else {
+                alert('Error: ' + (data.error || 'No se pudo actualizar'));
+                this.value = this.dataset.currentRole;
+            }
+        } catch(e) {
+            alert('Error de conexion');
+            this.value = this.dataset.currentRole;
+        }
+    });
+});
+</script>
 {% endblock %}

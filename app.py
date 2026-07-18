@@ -1,16 +1,21 @@
 import os
-import json
-import base64
-import requests
 from functools import wraps
-from flask import Flask, redirect, session, url_for, render_template, jsonify
+from flask import Flask, redirect, session, url_for, render_template, jsonify, request
 from authlib.integrations.flask_client import OAuth
 from dotenv import load_dotenv
+from models import db, User, Role, seed_roles, ROLE_HIERARCHY
 
 load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "fallback_secret")
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///climapp.db"
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+db.init_app(app)
+with app.app_context():
+    db.create_all()
+    seed_roles(app)
 
 oauth = OAuth(app)
 auth0 = oauth.register(
@@ -21,47 +26,8 @@ auth0 = oauth.register(
     client_kwargs={"scope": "openid profile email"},
 )
 
-ROLE_HIERARCHY = {"admin": 3, "operator": 2, "viewer": 1}
 AUTH0_DOMAIN = os.getenv("AUTH0_DOMAIN")
 AUTH0_CLIENT_ID = os.getenv("AUTH0_CLIENT_ID")
-AUTH0_CLIENT_SECRET = os.getenv("AUTH0_CLIENT_SECRET")
-MANAGEMENT_API = f"https://{AUTH0_DOMAIN}/api/v2"
-ROLES_CLAIM = f"https://{AUTH0_DOMAIN}/roles"
-
-
-def get_management_token():
-    resp = requests.post(
-        f"https://{AUTH0_DOMAIN}/oauth/token",
-        json={
-            "client_id": AUTH0_CLIENT_ID,
-            "client_secret": AUTH0_CLIENT_SECRET,
-            "audience": MANAGEMENT_API,
-            "grant_type": "client_credentials",
-        },
-        timeout=10,
-    )
-    data = resp.json()
-    app.logger.info(f"Management token response: status={resp.status_code} keys={list(data.keys())}")
-    if "access_token" not in data:
-        app.logger.error(f"Management token error: {data}")
-        return None, data
-    return data["access_token"], None
-
-
-def get_user_roles(user_id):
-    token, error = get_management_token()
-    if not token:
-        return [], error
-    resp = requests.get(
-        f"{MANAGEMENT_API}/users/{user_id}/roles",
-        headers={"Authorization": f"Bearer {token}"},
-        timeout=10,
-    )
-    data = resp.json()
-    app.logger.info(f"Roles response: status={resp.status_code} data={data}")
-    if resp.status_code != 200:
-        return [], data
-    return [r.get("name", "") for r in data.get("roles", [])], None
 
 
 def get_user():
@@ -119,12 +85,39 @@ def login():
 def callback():
     token = auth0.authorize_access_token()
     userinfo = token.get("userinfo", {})
-    user_id = userinfo.get("sub", "")
-    roles, error = get_user_roles(user_id) if user_id else ([], "no user_id")
+    auth0_id = userinfo.get("sub", "")
+
+    if not auth0_id:
+        return redirect(url_for("login"))
+
+    db_user = User.query.filter_by(auth0_id=auth0_id).first()
+
+    if not db_user:
+        has_admin = User.query.filter_by(role_id=Role.query.filter_by(name="admin").first().id).first()
+        auto_role = Role.query.filter_by(name="admin").first() if not has_admin else Role.query.filter_by(name="viewer").first()
+        db_user = User(
+            auth0_id=auth0_id,
+            email=userinfo.get("email", ""),
+            name=userinfo.get("name", ""),
+            picture=userinfo.get("picture", ""),
+            role_id=auto_role.id,
+        )
+        db.session.add(db_user)
+        db.session.commit()
+    else:
+        db_user.email = userinfo.get("email", db_user.email)
+        db_user.name = userinfo.get("name", db_user.name)
+        db_user.picture = userinfo.get("picture", db_user.picture)
+        admin_role = Role.query.filter_by(name="admin").first()
+        has_admin = User.query.filter(User.role_id == admin_role.id, User.id != db_user.id).first()
+        if not has_admin and db_user.role_id != admin_role.id:
+            db_user.role_id = admin_role.id
+        db.session.commit()
+
     session["user"] = userinfo
-    session["roles"] = roles
-    session["_debug_error"] = error
-    app.logger.info(f"Login - user: {userinfo.get('email')} | roles: {roles} | error: {error}")
+    session["roles"] = [db_user.role.name] if db_user.role else []
+    session["db_user_id"] = db_user.id
+
     return redirect(url_for("dashboard"))
 
 
@@ -162,7 +155,9 @@ def alertas():
 @login_required
 @role_required("admin")
 def usuarios():
-    return render_template("sections/usuarios.html")
+    all_users = User.query.all()
+    all_roles = Role.query.all()
+    return render_template("sections/usuarios.html", all_users=all_users, all_roles=all_roles)
 
 
 @app.route("/dashboard/config")
@@ -177,6 +172,56 @@ def api_user_roles():
     return jsonify({"roles": get_roles()})
 
 
+@app.route("/api/users", methods=["GET"])
+@login_required
+@role_required("admin")
+def api_list_users():
+    users = User.query.all()
+    return jsonify([{
+        "id": u.id,
+        "auth0_id": u.auth0_id,
+        "email": u.email,
+        "name": u.name,
+        "role": u.role.name if u.role else "viewer",
+        "role_id": u.role_id,
+        "created_at": u.created_at.isoformat() if u.created_at else None,
+    } for u in users])
+
+
+@app.route("/api/users/<int:user_id>/role", methods=["PUT"])
+@login_required
+@role_required("admin")
+def api_update_user_role(user_id):
+    data = request.get_json()
+    role_id = data.get("role_id")
+
+    if not role_id:
+        return jsonify({"error": "role_id requerido"}), 400
+
+    role = Role.query.get(role_id)
+    if not role:
+        return jsonify({"error": "Rol no encontrado"}), 404
+
+    target_user = User.query.get(user_id)
+    if not target_user:
+        return jsonify({"error": "Usuario no encontrado"}), 404
+
+    target_user.role_id = role_id
+    db.session.commit()
+
+    if session.get("db_user_id") == user_id:
+        session["roles"] = [role.name]
+
+    return jsonify({"ok": True, "user_id": user_id, "role": role.name})
+
+
+@app.route("/api/roles", methods=["GET"])
+@login_required
+def api_list_roles():
+    roles = Role.query.all()
+    return jsonify([{"id": r.id, "name": r.name, "level": r.level, "description": r.description} for r in roles])
+
+
 @app.route("/debug/token")
 @login_required
 def debug_token():
@@ -184,7 +229,7 @@ def debug_token():
         "session_roles": get_roles(),
         "email": get_user().get("email", ""),
         "user_id": get_user().get("sub", ""),
-        "debug_error": session.get("_debug_error"),
+        "db_user_id": session.get("db_user_id"),
     })
 
 

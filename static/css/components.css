@@ -290,3 +290,20 @@ tr:hover {
     margin-top: 1rem;
     line-height: 1.6;
 }
+
+.role-select {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    padding: 0.4rem 0.6rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: border-color var(--transition-fast);
+    outline: none;
+}
+
+.role-select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-dim);
+}
