@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Clima{% endblock %}
+{% block content %}
+<h1>Clima</h1>
+<p class="subtitle">Condiciones clim&#225;ticas actuales por ubicaci&#243;n</p>
+
+<div class="cards">
+    <a href="{{ url_for('pronostico') }}" class="card">
+        <div class="card-icon">&#9788;</div>
+        <h3>Pron&#243;stico</h3>
+        <p>Pron&#243;stico extendido a 7 d&#237;as</p>
+    </a>
+    <a href="{{ url_for('historial') }}" class="card">
+        <div class="card-icon">&#9776;</div>
+        <h3>Historial</h3>
+        <p>Datos hist&#243;ricos por fecha</p>
+    </a>
+    <a href="{{ url_for('alertas') }}" class="card">
+        <div class="card-icon">&#9888;</div>
+        <h3>Alertas</h3>
+        <p>Alertas meteorol&#243;gicas activas</p>
+    </a>
+</div>
+
+<div class="panel">
+    <h3>Clima Actual</h3>
+    <div class="empty-state">
+        <div class="icon">&#9729;</div>
+        <p>Selecciona una opci&#243;n para consultar el API clim&#225;tico</p>
+    </div>
+</div>
+{% endblock %}

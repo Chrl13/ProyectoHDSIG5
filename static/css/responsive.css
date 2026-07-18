@@ -1,0 +1,33 @@
+@media (max-width: 768px) {
+    .sidebar {
+        width: var(--sidebar-collapsed);
+    }
+
+    .sidebar-header h2,
+    .sidebar-header small,
+    .nav-section,
+    .nav-item span,
+    .nav-item .badge,
+    .sidebar-footer .user-data,
+    .sidebar-footer .logout-btn {
+        display: none;
+    }
+
+    .nav-item {
+        justify-content: center;
+        padding: 0.8rem;
+    }
+
+    .nav-item .icon {
+        font-size: 1.2rem;
+    }
+
+    .main {
+        margin-left: var(--sidebar-collapsed);
+        padding: 1.5rem;
+    }
+
+    .form-group input[type="text"] {
+        width: 100%;
+    }
+}

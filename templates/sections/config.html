@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Configuraci&#243;n{% endblock %}
+{% block content %}
+<h1>Configuraci&#243;n</h1>
+<p class="subtitle">Ajustes de la aplicaci&#243;n</p>
+
+<div class="panel" style="margin-bottom:1rem;">
+    <h3>API Clim&#225;tico</h3>
+    <dl class="info-list">
+        <dt>Dominio Auth0</dt>
+        <dd class="text-muted">Configurado en .env</dd>
+        <dt>Audience</dt>
+        <dd class="text-muted">Configurado en .env</dd>
+        <dt>Puerto</dt>
+        <dd class="text-muted">9900</dd>
+    </dl>
+</div>
+
+<div class="panel">
+    <h3>Tu cuenta</h3>
+    <dl class="info-list">
+        <dt>Nombre</dt>
+        <dd>{{ user.get('name', '-') }}</dd>
+        <dt>Email</dt>
+        <dd>{{ user.get('email', '-') }}</dd>
+        <dt>Rol</dt>
+        <dd>{% for r in roles %}<span class="badge-role {{ r }}">{{ r }}</span> {% else %}sin rol{% endfor %}</dd>
+        <dt>Auth0 ID</dt>
+        <dd class="text-muted">{{ user.get('sub', '-') }}</dd>
+    </dl>
+</div>
+{% endblock %}

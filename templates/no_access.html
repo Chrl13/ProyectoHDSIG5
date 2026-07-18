@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sin acceso</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/variables.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
+</head>
+<body class="home-body">
+    <div class="home-card">
+        <div class="card-icon" style="font-size:3rem; margin-bottom:1rem;">&#128274;</div>
+        <h1>Sin permisos</h1>
+        <p>No tienes acceso a esta secci&#243;n. Contacta al administrador.</p>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-primary">Volver al Panel</a>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const card = document.querySelector('.home-card');
+            if (card) {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px) scale(0.96)';
+                card.style.transition = 'opacity 0.5s ease, transform 0.5s cubic-bezier(0.16, 1, 0.3, 1)';
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        card.style.opacity = '1';
+                        card.style.transform = 'translateY(0) scale(1)';
+                    });
+                });
+            }
+        });
+    </script>
+</body>
+</html>

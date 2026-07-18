@@ -1,0 +1,71 @@
+.home-body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: var(--bg-body);
+}
+
+.home-card {
+    background: var(--gradient-card);
+    padding: 3rem;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--border);
+    text-align: center;
+    max-width: 420px;
+    width: 90%;
+    position: relative;
+    overflow: hidden;
+}
+
+.home-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--gradient-accent);
+}
+
+.home-card h1 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.02em;
+}
+
+.home-card p {
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.home-card .btn {
+    padding: 0.75rem 2rem;
+    font-size: 0.95rem;
+}
+
+.user-info {
+    background: var(--bg-secondary);
+    padding: 1.25rem;
+    border-radius: var(--radius);
+    margin-bottom: 1.5rem;
+    border: 1px solid var(--border);
+}
+
+.user-info img {
+    border-radius: 50%;
+    margin-bottom: 0.75rem;
+    border: 2px solid var(--accent);
+}
+
+.user-info h2 {
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.user-info small {
+    color: var(--text-secondary);
+}

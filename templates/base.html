@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Dashboard{% endblock %} - ClimApp</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/variables.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h2>ClimApp</h2>
+            <small>Sistema de Riesgo Ambiental</small>
+        </div>
+        <nav>
+            <div class="nav-section">Principal</div>
+            <a href="{{ url_for('dashboard') }}" class="nav-item {% if request.endpoint == 'dashboard' %}active{% endif %}">
+                <span class="icon">&#9632;</span> <span>Panel</span>
+            </a>
+
+            <div class="nav-section">Clima</div>
+            <a href="{{ url_for('clima') }}" class="nav-item {% if request.endpoint == 'clima' %}active{% endif %}">
+                <span class="icon">&#9729;</span> <span>Clima</span>
+            </a>
+            <a href="{{ url_for('pronostico') }}" class="nav-item {% if request.endpoint == 'pronostico' %}active{% endif %}">
+                <span class="icon">&#9788;</span> <span>Pron&#243;stico</span>
+            </a>
+            <a href="{{ url_for('historial') }}" class="nav-item {% if request.endpoint == 'historial' %}active{% endif %}">
+                <span class="icon">&#9776;</span> <span>Historial</span>
+            </a>
+            <a href="{{ url_for('alertas') }}" class="nav-item {% if request.endpoint == 'alertas' %}active{% endif %}">
+                <span class="icon">&#9888;</span> <span>Alertas</span>
+            </a>
+
+            {% if has_role('admin') %}
+            <div class="nav-section">Admin</div>
+            <a href="{{ url_for('usuarios') }}" class="nav-item {% if request.endpoint == 'usuarios' %}active{% endif %}">
+                <span class="icon">&#9775;</span> <span>Usuarios</span>
+                <span class="badge">Admin</span>
+            </a>
+            {% endif %}
+
+            <div class="nav-section">Sistema</div>
+            <a href="{{ url_for('config') }}" class="nav-item {% if request.endpoint == 'config' %}active{% endif %}">
+                <span class="icon">&#9881;</span> <span>Config</span>
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <img src="{{ user.get('picture', '') }}" alt="" width="32" height="32">
+            <div class="user-data">
+                <div class="name">{{ user.get('name', user.get('email', '')) }}</div>
+                <div class="role">{{ roles|join(', ') if roles else 'sin rol' }}</div>
+            </div>
+            <a href="{{ url_for('logout') }}" class="logout-btn" title="Cerrar sesi&#243;n">&#10140;</a>
+        </div>
+    </aside>
+
+    <main class="main">
+        {% block content %}{% endblock %}
+    </main>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

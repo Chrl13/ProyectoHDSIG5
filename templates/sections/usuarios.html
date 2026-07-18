@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Usuarios{% endblock %}
+{% block content %}
+<h1>Gesti&#243;n de Usuarios</h1>
+<p class="subtitle">Administrar usuarios y asignar roles (solo administradores)</p>
+
+<div class="panel" style="margin-bottom:1.5rem;">
+    <h3>Roles disponibles</h3>
+    <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+        <span class="badge-role admin">admin</span>
+        <span class="badge-role operator">operator</span>
+        <span class="badge-role viewer">viewer</span>
+    </div>
+    <p class="role-desc">
+        <strong>admin</strong>: acceso total &middot;
+        <strong>operator</strong>: consulta y operaciones clim&#225;ticas &middot;
+        <strong>viewer</strong>: solo lectura
+    </p>
+</div>
+
+<div class="panel">
+    <h3>Usuarios registrados</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Usuario</th>
+                <th>Email</th>
+                <th>Rol actual</th>
+                <th>Acci&#243;n</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>{{ user.get('name', '-') }}</td>
+                <td>{{ user.get('email', '-') }}</td>
+                <td>{% for r in roles %}<span class="badge-role {{ r }}">{{ r }}</span> {% else %}sin rol{% endfor %}</td>
+                <td>&#9998; Editar</td>
+            </tr>
+        </tbody>
+    </table>
+    <p class="table-note">
+        Para gestionar usuarios completa, integra el Management API de Auth0.<br>
+        Los roles se asignan en <code>app_metadata.roles</code> de cada usuario.
+    </p>
+</div>
+{% endblock %}

@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Panel{% endblock %}
+{% block content %}
+<h1>Panel Principal</h1>
+<p class="subtitle">Bienvenido, {{ user.get('name', user.get('email', '')) }}</p>
+
+<div class="cards">
+    <a href="{{ url_for('clima') }}" class="card">
+        <div class="card-icon">&#9729;</div>
+        <h3>Clima</h3>
+        <p>Consultar condiciones clim&#225;ticas actuales</p>
+    </a>
+    <a href="{{ url_for('pronostico') }}" class="card">
+        <div class="card-icon">&#9788;</div>
+        <h3>Pron&#243;stico</h3>
+        <p>Pron&#243;stico extendido por ubicaci&#243;n</p>
+    </a>
+    <a href="{{ url_for('historial') }}" class="card">
+        <div class="card-icon">&#9776;</div>
+        <h3>Historial</h3>
+        <p>Datos clim&#225;ticos hist&#243;ricos</p>
+    </a>
+    <a href="{{ url_for('alertas') }}" class="card">
+        <div class="card-icon">&#9888;</div>
+        <h3>Alertas</h3>
+        <p>Alertas meteorol&#243;gicas activas</p>
+    </a>
+    {% if has_role('admin') %}
+    <a href="{{ url_for('usuarios') }}" class="card">
+        <div class="card-icon">&#9775;</div>
+        <h3>Usuarios</h3>
+        <p>Gestionar usuarios y permisos</p>
+    </a>
+    {% endif %}
+</div>
+
+<div class="panel">
+    <h3>Tu sesi&#243;n</h3>
+    <dl class="info-list">
+        <dt>Email</dt>
+        <dd>{{ user.get('email', '-') }}</dd>
+        <dt>Rol</dt>
+        <dd>{% for r in roles %}<span class="badge-role {{ r }}">{{ r }}</span> {% else %}sin rol{% endfor %}</dd>
+        <dt>Auth0 ID</dt>
+        <dd class="text-muted">{{ user.get('sub', '-') }}</dd>
+    </dl>
+</div>
+{% endblock %}
