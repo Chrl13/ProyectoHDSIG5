@@ -1,31 +1,42 @@
 {% extends "base.html" %}
-{% block title %}Historial{% endblock %}
-{% block content %}
-<h1>Historial Clim&#225;tico</h1>
-<p class="subtitle">Datos clim&#225;ticos hist&#243;ricos por rango de fechas</p>
 
-<div class="panel" style="margin-bottom:1.5rem;">
-    <form class="form-row">
-        <div class="form-group">
-            <label>Ubicaci&#243;n</label>
-            <input type="text" placeholder="ej. Bogot&#225;, Colombia">
-        </div>
-        <div class="form-group">
-            <label>Desde</label>
-            <input type="date">
-        </div>
-        <div class="form-group">
-            <label>Hasta</label>
-            <input type="date">
-        </div>
-        <button type="button" class="btn btn-primary">Buscar</button>
-    </form>
-</div>
+{% block title %}Historial{% endblock %}
+
+{% block content %}
+
+<h1>Historial de Consultas</h1>
+
+<p class="subtitle">
+    Aquí se muestran todas las consultas realizadas por el usuario.
+</p>
 
 <div class="panel">
-    <div class="empty-state">
-        <div class="icon">&#9776;</div>
-        <p>Selecciona un rango de fechas para consultar el historial</p>
-    </div>
+
+    <table class="table" id="tablaHistorial">
+
+        <thead>
+
+            <tr>
+                <th>Fecha</th>
+                <th>Ciudad</th>
+                <th>País</th>
+                <th>Temperatura</th>
+                <th>Humedad</th>
+                <th>Viento</th>
+                <th>Lluvia</th>
+                <th>Tipo</th>
+            </tr>
+
+        </thead>
+
+        <tbody>
+
+        </tbody>
+
+    </table>
+
 </div>
+
+<script src="{{ url_for('static', filename='js/historial.js') }}"></script>
+
 {% endblock %}
