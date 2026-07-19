@@ -1,9 +1,17 @@
 import os
+import requests
 from functools import wraps
 from flask import Flask, redirect, session, url_for, render_template, jsonify, request
 from authlib.integrations.flask_client import OAuth
 from dotenv import load_dotenv
-from models import db, User, Role, seed_roles, ROLE_HIERARCHY
+from models import (
+    db,
+    User,
+    Role,
+    HistorialConsulta,
+    seed_roles,
+    ROLE_HIERARCHY
+)
 
 load_dotenv()
 
@@ -224,7 +232,201 @@ def api_list_roles():
     roles = Role.query.all()
     return jsonify([{"id": r.id, "name": r.name, "level": r.level, "description": r.description} for r in roles])
 
+# ==========================================================
+# API DEL CLIMA (Open-Meteo)
+# ==========================================================
 
+@app.route("/api/clima")
+@login_required
+def api_clima():
+
+    ciudad = request.args.get("ciudad", "").strip()
+
+    if ciudad == "":
+        return jsonify({
+            "error": "Debe indicar una ciudad."
+        }), 400
+
+    try:
+
+        geo_url = (
+            "https://geocoding-api.open-meteo.com/v1/search"
+            f"?name={ciudad}"
+            "&count=10"
+            "&language=es"
+            "&format=json"
+        )
+
+        geo_response = requests.get(geo_url, timeout=10)
+        geo_data = geo_response.json()
+
+        if "results" not in geo_data:
+            return jsonify({
+                "error": "Ciudad no encontrada."
+            }), 404
+
+        lugar = geo_data["results"][0]
+
+        if ciudad.lower() in ["san jose", "san josé"]:
+
+            for resultado in geo_data["results"]:
+
+                if resultado.get("country", "").lower() == "costa rica":
+                    lugar = resultado
+                    break
+
+        latitud = lugar["latitude"]
+        longitud = lugar["longitude"]
+
+        clima_url = (
+            "https://api.open-meteo.com/v1/forecast"
+            f"?latitude={latitud}"
+            f"&longitude={longitud}"
+            "&current=temperature_2m,"
+            "relative_humidity_2m,"
+            "apparent_temperature,"
+            "precipitation,"
+            "wind_speed_10m"
+        )
+
+        clima_response = requests.get(clima_url, timeout=10)
+        clima_data = clima_response.json()
+
+        actual = clima_data["current"]
+
+        usuario_id = session.get("db_user_id")
+
+        if usuario_id:
+
+            consulta = HistorialConsulta(
+                user_id=usuario_id,
+                ciudad=lugar["name"],
+                pais=lugar.get("country", ""),
+                temperatura=actual["temperature_2m"],
+                humedad=actual["relative_humidity_2m"],
+                viento=actual["wind_speed_10m"],
+                lluvia=actual["precipitation"],
+                tipo_consulta="Clima"
+            )
+
+            db.session.add(consulta)
+            db.session.commit()
+
+        return jsonify({
+            "ciudad": lugar["name"],
+            "pais": lugar.get("country", ""),
+            "latitud": latitud,
+            "longitud": longitud,
+            "temperatura": actual["temperature_2m"],
+            "humedad": actual["relative_humidity_2m"],
+            "sensacion": actual["apparent_temperature"],
+            "lluvia": actual["precipitation"],
+            "viento": actual["wind_speed_10m"]
+        })
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+    # ==========================================================
+# API DEL PRONÓSTICO (7 DÍAS)
+# ==========================================================
+@app.route("/api/pronostico")
+@login_required
+def api_pronostico():
+
+    ciudad = request.args.get("ciudad", "").strip()
+
+    if ciudad == "":
+        return jsonify({"error": "Debe indicar una ciudad."}), 400
+
+    try:
+
+        geo_url = (
+            "https://geocoding-api.open-meteo.com/v1/search"
+            f"?name={ciudad}"
+            "&count=10"
+            "&language=es"
+            "&format=json"
+        )
+
+        geo = requests.get(geo_url, timeout=10).json()
+
+        if "results" not in geo:
+            return jsonify({"error": "Ciudad no encontrada"}), 404
+
+        lugar = geo["results"][0]
+
+        if ciudad.lower() in ["san jose", "san josé"]:
+
+            for resultado in geo["results"]:
+
+                if resultado.get("country", "").lower() == "costa rica":
+                    lugar = resultado
+                    break
+
+        lat = lugar["latitude"]
+        lon = lugar["longitude"]
+
+        forecast_url = (
+            "https://api.open-meteo.com/v1/forecast"
+            f"?latitude={lat}"
+            f"&longitude={lon}"
+            "&daily=weather_code,temperature_2m_max,temperature_2m_min"
+            "&timezone=auto"
+        )
+
+        forecast = requests.get(forecast_url, timeout=10).json()
+
+        dias = []
+
+        for i in range(len(forecast["daily"]["time"])):
+
+            dias.append({
+                "fecha": forecast["daily"]["time"][i],
+                "max": forecast["daily"]["temperature_2m_max"][i],
+                "min": forecast["daily"]["temperature_2m_min"][i],
+                "codigo": forecast["daily"]["weather_code"][i]
+            })
+
+        return jsonify({
+            "ciudad": lugar["name"],
+            "pais": lugar.get("country", ""),
+            "dias": dias
+        })
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# ==========================================================
+# API DEL HISTORIAL 
+# ==========================================================
+
+@app.route("/api/historial")
+@login_required
+def api_historial():
+
+    usuario_id = session.get("db_user_id")
+
+    historial = (
+        HistorialConsulta.query
+        .filter_by(user_id=usuario_id)
+        .order_by(HistorialConsulta.fecha_consulta.desc())
+        .all()
+    )
+
+    return jsonify([
+        {
+            "fecha": h.fecha_consulta.strftime("%d/%m/%Y %H:%M"),
+            "ciudad": h.ciudad,
+            "pais": h.pais,
+            "temperatura": h.temperatura,
+            "humedad": h.humedad,
+            "viento": h.viento,
+            "lluvia": h.lluvia,
+            "tipo": h.tipo_consulta
+        }
+        for h in historial
+    ])
 @app.route("/debug/token")
 @login_required
 def debug_token():

@@ -1,30 +1,70 @@
 {% extends "base.html" %}
 {% block title %}Panel{% endblock %}
+
 {% block content %}
+
 <h1>Panel Principal</h1>
 <p class="subtitle">Bienvenido, {{ user.get('name', user.get('email', '')) }}</p>
 
+<!-- ========= CLIMA RÁPIDO ========= -->
+
+<div class="panel">
+
+    <h3>🌍 Clima en tiempo real</h3>
+
+    <div style="display:flex;gap:10px;margin:20px 0;">
+
+        <input
+            id="ciudadDashboard"
+            type="text"
+            placeholder="Buscar ciudad..."
+            value="San José"
+            style="flex:1;padding:10px;font-size:15px;">
+
+        <button onclick="buscarClimaDashboard()">
+            Buscar
+        </button>
+
+    </div>
+
+    <div id="climaDashboard">
+
+        <p>Cargando clima...</p>
+
+    </div>
+
+</div>
+
+<br>
+
+<!-- ========= MENÚ ========= -->
+
 <div class="cards">
+
     <a href="{{ url_for('clima') }}" class="card">
         <div class="card-icon">&#9729;</div>
         <h3>Clima</h3>
-        <p>Consultar condiciones clim&#225;ticas actuales</p>
+        <p>Consultar condiciones climáticas actuales</p>
     </a>
+
     <a href="{{ url_for('pronostico') }}" class="card">
         <div class="card-icon">&#9788;</div>
-        <h3>Pron&#243;stico</h3>
-        <p>Pron&#243;stico extendido por ubicaci&#243;n</p>
+        <h3>Pronóstico</h3>
+        <p>Pronóstico extendido por ubicación</p>
     </a>
+
     <a href="{{ url_for('historial') }}" class="card">
         <div class="card-icon">&#9776;</div>
         <h3>Historial</h3>
-        <p>Datos clim&#225;ticos hist&#243;ricos</p>
+        <p>Datos climáticos históricos</p>
     </a>
+
     <a href="{{ url_for('alertas') }}" class="card">
         <div class="card-icon">&#9888;</div>
         <h3>Alertas</h3>
-        <p>Alertas meteorol&#243;gicas activas</p>
+        <p>Alertas meteorológicas activas</p>
     </a>
+
     {% if has_role('admin') %}
     <a href="{{ url_for('usuarios') }}" class="card">
         <div class="card-icon">&#9775;</div>
@@ -32,17 +72,124 @@
         <p>Gestionar usuarios y permisos</p>
     </a>
     {% endif %}
+
 </div>
 
+<br>
+
 <div class="panel">
-    <h3>Tu sesi&#243;n</h3>
+
+    <h3>Tu sesión</h3>
+
     <dl class="info-list">
+
         <dt>Email</dt>
         <dd>{{ user.get('email', '-') }}</dd>
+
         <dt>Rol</dt>
-        <dd>{% for r in roles %}<span class="badge-role {{ r }}">{{ r }}</span> {% else %}sin rol{% endfor %}</dd>
+        <dd>
+            {% for r in roles %}
+                <span class="badge-role {{ r }}">{{ r }}</span>
+            {% else %}
+                sin rol
+            {% endfor %}
+        </dd>
+
         <dt>Auth0 ID</dt>
         <dd class="text-muted">{{ user.get('sub', '-') }}</dd>
+
     </dl>
+
 </div>
+
+<script>
+
+async function buscarClimaDashboard(){
+
+    const ciudad=document.getElementById("ciudadDashboard").value;
+
+    const contenedor=document.getElementById("climaDashboard");
+
+    contenedor.innerHTML="Cargando...";
+
+    try{
+
+        const r=await fetch("/api/clima?ciudad="+encodeURIComponent(ciudad));
+
+        const d=await r.json();
+
+        if(d.error){
+
+            contenedor.innerHTML="<p>"+d.error+"</p>";
+
+            return;
+
+        }
+
+        let riesgo="🟢 Bajo";
+
+        if(d.temperatura>35 || d.viento>60){
+
+            riesgo="🔴 Alto";
+
+        }
+        else if(d.temperatura>30 || d.viento>35){
+
+            riesgo="🟠 Medio";
+
+        }
+
+        contenedor.innerHTML=`
+
+        <div class="cards">
+
+            <div class="card">
+                <h3>📍 Ubicación</h3>
+                <p>${d.ciudad}</p>
+                <small>${d.pais}</small>
+            </div>
+
+            <div class="card">
+                <h3>🌡 Temperatura</h3>
+                <p>${d.temperatura} °C</p>
+            </div>
+
+            <div class="card">
+                <h3>💧 Humedad</h3>
+                <p>${d.humedad}%</p>
+            </div>
+
+            <div class="card">
+                <h3>🌬 Viento</h3>
+                <p>${d.viento} km/h</p>
+            </div>
+
+            <div class="card">
+                <h3>🌧 Lluvia</h3>
+                <p>${d.lluvia} mm</p>
+            </div>
+
+            <div class="card">
+                <h3>⚠ Riesgo</h3>
+                <p style="font-size:20px">${riesgo}</p>
+            </div>
+
+        </div>
+
+        `;
+
+    }
+
+    catch(e){
+
+        contenedor.innerHTML="Error al consultar el clima.";
+
+    }
+
+}
+
+buscarClimaDashboard();
+
+</script>
+
 {% endblock %}
