@@ -36,6 +36,39 @@ class User(db.Model):
     def __repr__(self):
         return f"<User {self.email} [{self.role.name if self.role else '?'}]>"
 
+class HistorialConsulta(db.Model):
+    __tablename__ = "historial_consultas"
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    user_id = db.Column(
+        db.Integer,
+        db.ForeignKey("users.id"),
+        nullable=False
+    )
+
+    ciudad = db.Column(db.String(100), nullable=False)
+    pais = db.Column(db.String(100), nullable=False)
+
+    temperatura = db.Column(db.Float)
+    humedad = db.Column(db.Integer)
+    viento = db.Column(db.Float)
+    lluvia = db.Column(db.Float)
+
+    tipo_consulta = db.Column(db.String(20), nullable=False)
+
+    fecha_consulta = db.Column(
+        db.DateTime,
+        default=lambda: datetime.now(timezone.utc)
+    )
+
+    usuario = db.relationship("User", backref="historial")
+
+    def __repr__(self):
+        return (
+            f"<HistorialConsulta {self.ciudad} - "
+            f"{self.tipo_consulta}>"
+        )
 
 def seed_roles(app):
     with app.app_context():
