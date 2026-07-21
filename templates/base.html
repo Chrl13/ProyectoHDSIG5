@@ -45,6 +45,8 @@
                 <span class="icon">&#9888;</span> <span>Alertas</span>
             </a>
 
+    >
+
             {% if has_role('admin') %}
             <div class="nav-section">Admin</div>
             <a href="{{ url_for('usuarios') }}" class="nav-item {% if request.endpoint == 'usuarios' %}active{% endif %}">

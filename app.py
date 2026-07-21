@@ -4,6 +4,7 @@ from functools import wraps
 from flask import Flask, redirect, session, url_for, render_template, jsonify, request
 from authlib.integrations.flask_client import OAuth
 from dotenv import load_dotenv
+from sqlalchemy import func
 from models import (
     db,
     User,
@@ -160,6 +161,8 @@ def historial():
 @login_required
 def alertas():
     return render_template("sections/alertas.html")
+
+
 
 
 @app.route("/dashboard/usuarios")
@@ -396,7 +399,54 @@ def api_pronostico():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
+   # ==========================================================
+# API DASHBOARD
+# ==========================================================
 
+from sqlalchemy import func
+
+@app.route("/api/dashboard")
+@login_required
+def api_dashboard():
+
+    total = HistorialConsulta.query.count()
+
+    temp_promedio = db.session.query(
+        func.avg(HistorialConsulta.temperatura)
+    ).scalar() or 0
+
+    viento_promedio = db.session.query(
+        func.avg(HistorialConsulta.viento)
+    ).scalar() or 0
+
+    ciudad = (
+        db.session.query(
+            HistorialConsulta.ciudad,
+            func.count(HistorialConsulta.id)
+        )
+        .group_by(HistorialConsulta.ciudad)
+        .order_by(func.count(HistorialConsulta.id).desc())
+        .first()
+    )
+
+    ciudad_frecuente = ciudad[0] if ciudad else "Sin datos"
+
+    return jsonify({
+
+        "consultas": total,
+        "temperatura_promedio": round(temp_promedio, 1),
+        "viento_promedio": round(viento_promedio, 1),
+        "ciudad_frecuente": ciudad_frecuente,
+
+        # Datos para el gráfico
+        "grafico": [
+            total,
+            round(temp_promedio, 1),
+            round(viento_promedio, 1)
+        ]
+
+    })
 # ==========================================================
 # API DEL HISTORIAL 
 # ==========================================================
@@ -437,6 +487,111 @@ def debug_token():
         "db_user_id": session.get("db_user_id"),
     })
 
+from sqlalchemy import func
+from datetime import datetime
+
+@app.route("/api/reportes")
+@login_required
+def api_reportes():
+
+    total = HistorialConsulta.query.count()
+
+    temp_promedio = db.session.query(
+        func.avg(HistorialConsulta.temperatura)
+    ).scalar() or 0
+
+    viento_promedio = db.session.query(
+        func.avg(HistorialConsulta.viento)
+    ).scalar() or 0
+
+    ciudad = (
+        db.session.query(
+            HistorialConsulta.ciudad,
+            func.count(HistorialConsulta.id)
+        )
+        .group_by(HistorialConsulta.ciudad)
+        .order_by(func.count(HistorialConsulta.id).desc())
+        .first()
+    )
+
+    ciudad_frecuente = ciudad[0] if ciudad else "Sin datos"
+
+    if temp_promedio >= 35:
+        riesgo = "🔴 Alto"
+        conclusion = "Se detectan temperaturas elevadas que podrían representar un riesgo ambiental."
+    elif temp_promedio >= 28:
+        riesgo = "🟡 Moderado"
+        conclusion = "Las condiciones ambientales requieren monitoreo."
+    else:
+        riesgo = "🟢 Bajo"
+        conclusion = "Las condiciones ambientales registradas son estables."
+
+    return jsonify({
+        "fecha": datetime.now().strftime("%d/%m/%Y"),
+        "consultas": total,
+        "ciudad": ciudad_frecuente,
+        "temperatura": round(temp_promedio,1),
+        "viento": round(viento_promedio,1),
+        "riesgo": riesgo,
+        "conclusion": conclusion
+    })
+
+# ==========================================================
+# API DEL ALERTAS 
+# ==========================================================
+
+@app.route("/api/alertas")
+@login_required
+def api_alertas():
+
+    usuario_id = session.get("db_user_id")
+
+    consulta = (
+        HistorialConsulta.query
+        .filter_by(user_id=usuario_id)
+        .order_by(HistorialConsulta.fecha_consulta.desc())
+        .first()
+    )
+
+    if not consulta:
+        return jsonify({
+            "error": "Primero debe realizar una consulta del clima."
+        })
+
+    alertas = []
+
+    if consulta.temperatura >= 35:
+        alertas.append({
+            "nivel": "🔴 Alta",
+            "titulo": "Calor extremo",
+            "descripcion": "La temperatura supera los 35°C."
+        })
+
+    if consulta.viento >= 60:
+        alertas.append({
+            "nivel": "🟠 Media",
+            "titulo": "Vientos fuertes",
+            "descripcion": "Se detectan vientos fuertes."
+        })
+
+    if consulta.lluvia >= 50:
+        alertas.append({
+            "nivel": "🔵 Media",
+            "titulo": "Lluvias intensas",
+            "descripcion": "Existe riesgo de lluvias intensas."
+        })
+
+    if not alertas:
+        alertas.append({
+            "nivel": "🟢 Baja",
+            "titulo": "Sin alertas",
+            "descripcion": "No se detectan riesgos ambientales."
+        })
+
+    return jsonify({
+        "ciudad": consulta.ciudad,
+        "alertas": alertas
+    })
 
 @app.route("/logout")
 def logout():
