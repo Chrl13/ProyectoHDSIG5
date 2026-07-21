@@ -1,39 +1,74 @@
 {% extends "base.html" %}
 {% block title %}Alertas{% endblock %}
-{% block content %}
-<h1>Alertas Meteorol&#243;gicas</h1>
-<p class="subtitle">Alertas activas por zona geogr&#225;fica</p>
 
-<div class="panel" style="margin-bottom:1.5rem;">
-    <form class="form-row">
-        <div class="form-group">
-            <label>Zona</label>
-            <select>
-                <option>Todas</option>
-                <option>Norte</option>
-                <option>Sur</option>
-                <option>Este</option>
-                <option>Oeste</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label>Tipo</label>
-            <select>
-                <option>Todas</option>
-                <option>Temporal</option>
-                <option>Inundaci&#243;n</option>
-                <option>Sequ&#237;a</option>
-                <option>Viento</option>
-            </select>
-        </div>
-        <button type="button" class="btn btn-primary">Filtrar</button>
-    </form>
-</div>
+{% block content %}
+
+<h1>⚠ Alertas Meteorológicas</h1>
+<p class="subtitle">Consulta las alertas ambientales para una ciudad.</p>
 
 <div class="panel">
-    <div class="empty-state">
-        <div class="icon">&#9888;</div>
-        <p>No hay alertas activas en este momento</p>
+
+    <div style="display:flex; gap:10px; margin-bottom:20px;">
+
+        <input
+            id="ciudadAlerta"
+            type="text"
+            value="San José"
+            placeholder="Ingrese una ciudad..."
+            style="flex:1;padding:10px;">
+
+        <button onclick="cargarAlertas()">
+            Buscar
+        </button>
+
     </div>
+
+    <div id="listaAlertas">
+        <p>Cargando alertas...</p>
+    </div>
+
 </div>
+
+<script>
+
+async function cargarAlertas(){
+
+    const ciudad = document.getElementById("ciudadAlerta").value;
+
+    const r = await fetch("/api/alertas?ciudad=" + encodeURIComponent(ciudad));
+    const d = await r.json();
+
+    const contenedor = document.getElementById("listaAlertas");
+
+    if(d.error){
+        contenedor.innerHTML = "<p>" + d.error + "</p>";
+        return;
+    }
+
+    let html = "";
+
+    d.alertas.forEach(a => {
+
+        html += `
+
+        <div class="card" style="margin-bottom:15px;">
+
+            <h3>${a.nivel} ${a.titulo}</h3>
+
+            <p>${a.descripcion}</p>
+
+        </div>
+
+        `;
+
+    });
+
+    contenedor.innerHTML = html;
+
+}
+
+cargarAlertas();
+
+</script>
+
 {% endblock %}

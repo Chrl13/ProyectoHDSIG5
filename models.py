@@ -31,7 +31,7 @@ class User(db.Model):
     role_id = db.Column(db.Integer, db.ForeignKey("roles.id"), nullable=False)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc),
-                           onupdate=lambda: datetime.now(timezone.utc))
+                        onupdate=lambda: datetime.now(timezone.utc))
 
     def __repr__(self):
         return f"<User {self.email} [{self.role.name if self.role else '?'}]>"

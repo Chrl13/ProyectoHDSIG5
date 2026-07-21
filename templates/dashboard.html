@@ -28,9 +28,7 @@
     </div>
 
     <div id="climaDashboard">
-
         <p>Cargando clima...</p>
-
     </div>
 
 </div>
@@ -77,6 +75,48 @@
 
 <br>
 
+<!-- ========= INDICADORES ========= -->
+
+<div class="panel">
+
+    <h3>📊 Indicadores del Sistema</h3>
+
+    <div id="dashboardIndicadores">
+        <p>Cargando indicadores...</p>
+    </div>
+
+</div>
+
+<br>
+
+<!-- ========= GRÁFICO ========= -->
+
+<div class="panel">
+
+    <h3>📈 Resumen Analítico</h3>
+
+    <div style="width:650px; height:250px; margin:20px auto;">
+        <canvas id="graficoDashboard"></canvas>
+    </div>
+
+</div>
+
+<br>
+
+<div class="panel">
+
+    <h3>📄 Reporte del Estado Ambiental</h3>
+
+    <div id="reporteAmbiental">
+        <p>Cargando reporte...</p>
+    </div>
+
+</div>
+
+<br>
+
+<br>
+
 <div class="panel">
 
     <h3>Tu sesión</h3>
@@ -102,12 +142,14 @@
 
 </div>
 
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <script>
 
 async function buscarClimaDashboard(){
 
     const ciudad=document.getElementById("ciudadDashboard").value;
-
     const contenedor=document.getElementById("climaDashboard");
 
     contenedor.innerHTML="Cargando...";
@@ -115,28 +157,20 @@ async function buscarClimaDashboard(){
     try{
 
         const r=await fetch("/api/clima?ciudad="+encodeURIComponent(ciudad));
-
         const d=await r.json();
 
         if(d.error){
-
             contenedor.innerHTML="<p>"+d.error+"</p>";
-
             return;
-
         }
 
         let riesgo="🟢 Bajo";
 
         if(d.temperatura>35 || d.viento>60){
-
             riesgo="🔴 Alto";
-
         }
         else if(d.temperatura>30 || d.viento>35){
-
             riesgo="🟠 Medio";
-
         }
 
         contenedor.innerHTML=`
@@ -175,6 +209,50 @@ async function buscarClimaDashboard(){
             </div>
 
         </div>
+        `;
+
+    }
+
+    catch(e){
+        contenedor.innerHTML="Error al consultar el clima.";
+    }
+
+}
+
+async function cargarIndicadores(){
+
+    const contenedor = document.getElementById("dashboardIndicadores");
+
+    try{
+
+        const r = await fetch("/api/dashboard");
+        const d = await r.json();
+
+        contenedor.innerHTML = `
+
+        <div class="cards">
+
+            <div class="card">
+                <h3>📊 Consultas</h3>
+                <p>${d.consultas}</p>
+            </div>
+
+            <div class="card">
+                <h3>🌡 Temp. Promedio</h3>
+                <p>${d.temperatura_promedio} °C</p>
+            </div>
+
+            <div class="card">
+                <h3>💨 Viento Promedio</h3>
+                <p>${d.viento_promedio} km/h</p>
+            </div>
+
+            <div class="card">
+                <h3>🏙 Ciudad más consultada</h3>
+                <p>${d.ciudad_frecuente}</p>
+            </div>
+
+        </div>
 
         `;
 
@@ -182,13 +260,134 @@ async function buscarClimaDashboard(){
 
     catch(e){
 
-        contenedor.innerHTML="Error al consultar el clima.";
+        contenedor.innerHTML="<p>Error al cargar indicadores.</p>";
 
     }
 
 }
 
+let grafico = null;
+
+
+
+async function cargarGrafico(){
+
+    const r = await fetch("/api/dashboard");
+    const d = await r.json();
+
+    const ctx = document.getElementById("graficoDashboard");
+
+    if(grafico){
+        grafico.destroy();
+    }
+
+    grafico = new Chart(ctx, {
+
+        type: "bar",
+
+        data: {
+
+            labels: [
+                "Consultas",
+                "Temp. Promedio",
+                "Viento Promedio"
+            ],
+
+            datasets: [{
+
+                label: "Indicadores",
+
+                data: [
+                    d.consultas,
+                    d.temperatura_promedio,
+                    d.viento_promedio
+                ],
+
+                backgroundColor: [
+                    "#4F8EF7",
+                    "#36CFC9",
+                    "#F5A623"
+                ],
+
+                borderColor: [
+                    "#4F8EF7",
+                    "#36CFC9",
+                    "#F5A623"
+                ],
+
+                borderWidth: 1,
+                borderRadius: 8,
+                maxBarThickness: 70
+
+            }]
+
+        },
+
+        options: {
+
+            responsive: true,
+            maintainAspectRatio: false,
+
+            plugins: {
+
+                legend: {
+                    display: false
+                },
+
+                title: {
+                    display: true,
+                    text: "Indicadores Generales"
+                }
+
+            },
+
+            scales: {
+
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 5
+                    }
+                }
+
+            }
+
+        }
+
+    });
+
+}
+async function cargarReporte(){
+
+    const r = await fetch("/api/reportes");
+    const d = await r.json();
+
+    document.getElementById("reporteAmbiental").innerHTML = `
+
+        <p><strong>📅 Fecha:</strong> ${d.fecha}</p>
+
+        <p><strong>🌍 Ciudad más consultada:</strong> ${d.ciudad}</p>
+
+        <p><strong>📊 Total de consultas:</strong> ${d.consultas}</p>
+
+        <p><strong>🌡 Temperatura promedio:</strong> ${d.temperatura} °C</p>
+
+        <p><strong>💨 Viento promedio:</strong> ${d.viento} km/h</p>
+
+        <p><strong>⚠ Nivel de riesgo:</strong> ${d.riesgo}</p>
+
+        <hr>
+
+        <p>${d.conclusion}</p>
+
+    `;
+
+}
+
 buscarClimaDashboard();
+cargarIndicadores();
+cargarGrafico();
+cargarReporte();
 
 </script>
 

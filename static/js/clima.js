@@ -1,3 +1,5 @@
+let mapa = null;
+
 async function buscarClima() {
 
     const ciudad = document.getElementById("ciudad").value;
@@ -61,6 +63,80 @@ async function buscarClima() {
 
             </div>
         `;
+
+        // ===========================
+        // Calcular nivel de riesgo
+        // ===========================
+
+        let riesgo = "Bajo";
+        let color = "green";
+
+        if (datos.lluvia >= 10 || datos.viento >= 40) {
+            riesgo = "Alto";
+            color = "red";
+        } else if (datos.temperatura >= 30) {
+            riesgo = "Medio";
+            color = "orange";
+        }
+
+        // ===========================
+        // Mostrar mapa
+        // ===========================
+
+        const mapaDiv = document.getElementById("mapa");
+        mapaDiv.style.display = "block";
+
+        if (!mapa) {
+
+            mapa = L.map("mapa");
+
+            L.tileLayer(
+                "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+                {
+                    attribution: "&copy; OpenStreetMap"
+                }
+            ).addTo(mapa);
+
+        }
+
+        mapa.setView(
+            [datos.latitud, datos.longitud],
+            10
+        );
+
+        // Elimina todos los marcadores y círculos anteriores
+        mapa.eachLayer(function(layer) {
+
+            if (!(layer instanceof L.TileLayer)) {
+                mapa.removeLayer(layer);
+            }
+
+        });
+
+        // Agrega el nuevo marcador
+        L.marker([datos.latitud, datos.longitud])
+            .addTo(mapa)
+            .bindPopup(
+                `<b>${datos.ciudad}</b><br>
+                ${datos.pais}<br>
+                <strong>Riesgo: ${riesgo}</strong>`
+            )
+            .openPopup();
+
+        // Agrega el círculo de riesgo
+        L.circle(
+            [datos.latitud, datos.longitud],
+            {
+                radius: 5000,
+                color: color,
+                fillColor: color,
+                fillOpacity: 0.35
+            }
+        ).addTo(mapa);
+
+        setTimeout(() => {
+            mapa.invalidateSize();
+        }, 100);
 
     } catch (e) {
 

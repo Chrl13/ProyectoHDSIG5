@@ -1,0 +1,70 @@
+<div class="panel">
+
+    <h2>📄 Reporte del Estado Ambiental</h2>
+
+    <div class="stats-grid">
+
+        <div class="stat-card">
+            <h3>Total de consultas</h3>
+            <p id="repConsultas">0</p>
+        </div>
+
+        <div class="stat-card">
+            <h3>Ciudad más consultada</h3>
+            <p id="repCiudad">-</p>
+        </div>
+
+        <div class="stat-card">
+            <h3>Temperatura promedio</h3>
+            <p id="repTemp">0 °C</p>
+        </div>
+
+        <div class="stat-card">
+            <h3>Viento promedio</h3>
+            <p id="repViento">0 km/h</p>
+        </div>
+
+        <div class="stat-card">
+            <h3>Nivel de riesgo</h3>
+            <p id="repRiesgo">-</p>
+        </div>
+
+        <div class="stat-card">
+            <h3>Fecha del reporte</h3>
+            <p id="repFecha">-</p>
+        </div>
+
+    </div>
+
+    <div class="panel" style="margin-top:20px;">
+
+        <h3>Conclusión</h3>
+
+        <p id="repConclusion">
+            Cargando...
+        </p>
+
+    </div>
+
+</div>
+
+<script>
+
+async function cargarReporte(){
+
+    const r = await fetch("/api/reportes");
+    const d = await r.json();
+
+    document.getElementById("repConsultas").textContent = d.consultas;
+    document.getElementById("repCiudad").textContent = d.ciudad;
+    document.getElementById("repTemp").textContent = d.temperatura + " °C";
+    document.getElementById("repViento").textContent = d.viento + " km/h";
+    document.getElementById("repRiesgo").textContent = d.riesgo;
+    document.getElementById("repFecha").textContent = d.fecha;
+    document.getElementById("repConclusion").textContent = d.conclusion;
+
+}
+
+cargarReporte();
+
+</script>
