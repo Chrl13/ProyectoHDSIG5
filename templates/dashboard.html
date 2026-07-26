@@ -270,14 +270,14 @@ let grafico = null;
 
 
 
-async function cargarGrafico(){
+async function cargarGrafico() {
 
     const r = await fetch("/api/dashboard");
     const d = await r.json();
 
     const ctx = document.getElementById("graficoDashboard");
 
-    if(grafico){
+    if (grafico) {
         grafico.destroy();
     }
 
@@ -287,37 +287,33 @@ async function cargarGrafico(){
 
         data: {
 
-            labels: [
-                "Consultas",
-                "Temp. Promedio",
-                "Viento Promedio"
-            ],
+            labels: d.consultas_por_ciudad.map(c => c.ciudad),
 
             datasets: [{
 
-                label: "Indicadores",
+                label: "Cantidad de consultas",
 
-                data: [
-                    d.consultas,
-                    d.temperatura_promedio,
-                    d.viento_promedio
-                ],
+                data: d.consultas_por_ciudad.map(c => c.cantidad),
 
                 backgroundColor: [
                     "#4F8EF7",
                     "#36CFC9",
-                    "#F5A623"
+                    "#F5A623",
+                    "#7B61FF",
+                    "#00C853"
                 ],
 
                 borderColor: [
                     "#4F8EF7",
                     "#36CFC9",
-                    "#F5A623"
+                    "#F5A623",
+                    "#7B61FF",
+                    "#00C853"
                 ],
 
                 borderWidth: 1,
                 borderRadius: 8,
-                maxBarThickness: 70
+                maxBarThickness: 60
 
             }]
 
@@ -336,7 +332,10 @@ async function cargarGrafico(){
 
                 title: {
                     display: true,
-                    text: "Indicadores Generales"
+                    text: "Top 5 ciudades más consultadas",
+                    font: {
+                        size: 18
+                    }
                 }
 
             },
@@ -346,7 +345,18 @@ async function cargarGrafico(){
                 y: {
                     beginAtZero: true,
                     ticks: {
-                        stepSize: 5
+                        precision: 0
+                    },
+                    title: {
+                        display: true,
+                        text: "Cantidad de consultas"
+                    }
+                },
+
+                x: {
+                    title: {
+                        display: true,
+                        text: "Ciudades"
                     }
                 }
 

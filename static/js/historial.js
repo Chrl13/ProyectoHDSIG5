@@ -15,12 +15,10 @@ async function cargarHistorial() {
             tbody.innerHTML += `
                 <tr>
                     <td>${h.fecha}</td>
+                    <td>${h.usuario}</td>
+                    <td>${h.accion}</td>
                     <td>${h.ciudad}</td>
                     <td>${h.pais}</td>
-                    <td>${h.temperatura} °C</td>
-                    <td>${h.humedad}%</td>
-                    <td>${h.viento} km/h</td>
-                    <td>${h.lluvia} mm</td>
                     <td>${h.tipo}</td>
                 </tr>
             `;
