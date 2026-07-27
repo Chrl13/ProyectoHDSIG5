@@ -14,6 +14,12 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from app import create_app
 from models import db as _db, User, Role, HistorialConsulta
 
+SCREENSHOTS_DIR = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    "reports", "screenshots"
+)
+os.makedirs(SCREENSHOTS_DIR, exist_ok=True)
+
 
 @pytest.fixture(scope="session")
 def app():
@@ -175,3 +181,42 @@ def sample_historial(db_session, admin_user):
         db_session.add(c)
     db_session.commit()
     return consultas
+
+
+@pytest.fixture
+def screenshot(driver, request):
+    """Fixture that provides screenshot capability for Selenium tests.
+
+    Automatically captures:
+    - A screenshot at the start of the test
+    - A screenshot at the end of the test (success)
+    - A screenshot on failure (before closing)
+
+    Also exposes a capture() method for manual screenshots at any point.
+    """
+    test_name = request.node.name
+    class_name = request.node.cls.__name__ if request.node.cls else "standalone"
+    prefix = f"{class_name}__{test_name}"
+
+    def capture(label):
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"{prefix}__{label}__{timestamp}.png"
+        filepath = os.path.join(SCREENSHOTS_DIR, filename)
+        driver.save_screenshot(filepath)
+        return filepath
+
+    capture(f"01_inicio")
+    yield capture
+
+    if hasattr(request.node, "rep_call") and request.node.rep_call.failed:
+        capture("99_fallo")
+    else:
+        capture("02_fin_exitoso")
+
+
+@pytest.hookimpl(tryfirst=True, hookwrapper=True)
+def pytest_runtest_makereport(item, call):
+    import pytest
+    outcome = yield
+    rep = outcome.get_result()
+    setattr(item, f"rep_{rep.when}", rep)
