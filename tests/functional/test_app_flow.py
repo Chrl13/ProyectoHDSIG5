@@ -127,65 +127,24 @@ class TestHomePage:
 
 @pytest.mark.functional
 class TestAuthenticationRedirects:
-    def test_dashboard_redirects_when_not_logged_in(self, server, screenshot):
-        screenshot("02_solicitando_dashboard_sin_sesion")
-        resp = http_requests.get(
-            "http://127.0.0.1:9901/dashboard",
-            allow_redirects=False,
-        )
-        screenshot("02_respuesta_redirect_obtenida")
-        assert resp.status_code in (301, 302)
-        location = resp.headers.get("Location", "")
-        assert "login" in location.lower()
+    PROTECTED_ROUTES = [
+        "/dashboard",
+        "/dashboard/clima",
+        "/dashboard/clima/historial",
+        "/dashboard/usuarios",
+        "/dashboard/clima/pronostico",
+        "/dashboard/config",
+    ]
 
-    def test_clima_redirects_when_not_logged_in(self, server, screenshot):
-        screenshot("02_solicitando_clima_sin_sesion")
-        resp = http_requests.get(
-            "http://127.0.0.1:9901/dashboard/clima",
-            allow_redirects=False,
-        )
-        screenshot("02_respuesta_redirect_clima")
-        assert resp.status_code in (301, 302)
-        location = resp.headers.get("Location", "")
-        assert "login" in location.lower()
-
-    def test_historial_redirects_when_not_logged_in(self, server, screenshot):
-        screenshot("02_solicitando_historial_sin_sesion")
-        resp = http_requests.get(
-            "http://127.0.0.1:9901/dashboard/clima/historial",
-            allow_redirects=False,
-        )
-        screenshot("02_respuesta_redirect_historial")
-        assert resp.status_code in (301, 302)
-        location = resp.headers.get("Location", "")
-        assert "login" in location.lower()
-
-    def test_usuarios_redirects_when_not_logged_in(self, server, screenshot):
-        screenshot("02_solicitando_usuarios_sin_sesion")
-        resp = http_requests.get(
-            "http://127.0.0.1:9901/dashboard/usuarios",
-            allow_redirects=False,
-        )
-        screenshot("02_respuesta_redirect_usuarios")
-        assert resp.status_code in (301, 302)
-
-    def test_pronostico_redirects_when_not_logged_in(self, server, screenshot):
-        screenshot("02_solicitando_pronostico_sin_sesion")
-        resp = http_requests.get(
-            "http://127.0.0.1:9901/dashboard/clima/pronostico",
-            allow_redirects=False,
-        )
-        screenshot("02_respuesta_redirect_pronostico")
-        assert resp.status_code in (301, 302)
-
-    def test_config_redirects_when_not_logged_in(self, server, screenshot):
-        screenshot("02_solicitando_config_sin_sesion")
-        resp = http_requests.get(
-            "http://127.0.0.1:9901/dashboard/config",
-            allow_redirects=False,
-        )
-        screenshot("02_respuesta_redirect_config")
-        assert resp.status_code in (301, 302)
+    def test_protected_routes_redirect_to_login_when_not_authenticated(self, server):
+        for url in self.PROTECTED_ROUTES:
+            resp = http_requests.get(
+                f"http://127.0.0.1:9901{url}",
+                allow_redirects=False,
+            )
+            assert resp.status_code in (301, 302), f"{url} no redirige"
+            location = resp.headers.get("Location", "")
+            assert "login" in location.lower(), f"{url} no apunta a /login"
 
 
 # ====================================================================

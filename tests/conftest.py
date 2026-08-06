@@ -188,11 +188,12 @@ def screenshot(driver, request):
     """Fixture that provides screenshot capability for Selenium tests.
 
     Automatically captures:
-    - A screenshot at the start of the test
     - A screenshot at the end of the test (success)
     - A screenshot on failure (before closing)
 
     Also exposes a capture() method for manual screenshots at any point.
+    The screenshots only show the page the browser is actually on at the
+    moment of the capture, so each test must navigate before capturing.
     """
     test_name = request.node.name
     class_name = request.node.cls.__name__ if request.node.cls else "standalone"
@@ -205,7 +206,6 @@ def screenshot(driver, request):
         driver.save_screenshot(filepath)
         return filepath
 
-    capture(f"01_inicio")
     yield capture
 
     if hasattr(request.node, "rep_call") and request.node.rep_call.failed:

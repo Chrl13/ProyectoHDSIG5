@@ -236,7 +236,7 @@ requests-mock
 Cantidad total:
 
 ```
-17 pruebas funcionales
+12 pruebas funcionales
 ```
 
 Ubicación:
@@ -257,11 +257,13 @@ Se verifican:
 
 * Carga inicial de la aplicación.
 * Navegación entre páginas.
-* Redirecciones.
+* Redirecciones de rutas protegidas hacia el inicio de sesión.
 * Inicio de sesión.
 * Manejo de cookies.
 * Control de acceso basado en roles (RBAC).
 * Cierre de sesión.
+
+Las pruebas de redirección se agruparon en un único caso de prueba que recorre las seis rutas protegidas (`/dashboard`, `/dashboard/clima`, `/dashboard/clima/historial`, `/dashboard/usuarios`, `/dashboard/clima/pronostico`, `/dashboard/config`) y valida que todas devuelvan una redirección (302) hacia `/login`, evitando capturas repetitivas de la misma página de inicio de sesión.
 
 ---
 
@@ -270,15 +272,15 @@ Se verifican:
 Ejecución completa:
 
 ```
-96 pruebas ejecutadas
-96 pruebas aprobadas
+91 pruebas ejecutadas
+91 pruebas aprobadas
 0 pruebas fallidas
 ```
 
 Tiempo total:
 
 ```
-95.33 segundos
+105.33 segundos
 ```
 
 Detalle:
@@ -287,8 +289,8 @@ Detalle:
 | -------------- | -------: | --------- |
 | Unitarias      |       38 | PASS      |
 | Integración    |       41 | PASS      |
-| Funcionales    |       17 | PASS      |
-| Total          |       96 | PASS      |
+| Funcionales    |       12 | PASS      |
+| Total          |       91 | PASS      |
 
 ---
 
@@ -303,7 +305,7 @@ Detalle:
 Resultado esperado:
 
 ```
-96 passed
+91 passed
 ```
 
 ---
@@ -347,7 +349,7 @@ Requiere Google Chrome instalado.
 Resultado esperado:
 
 ```
-17 passed
+12 passed
 ```
 
 ---
@@ -425,24 +427,19 @@ reports/screenshots/
 Cantidad generada:
 
 ```
-66 capturas PNG
+31 capturas PNG
 ```
 
-Las capturas documentan:
-
-* Inicio de cada prueba.
-* Acciones importantes realizadas.
-* Estado final exitoso.
-* Estado de error en caso de fallos.
+Las capturas documentan las páginas reales que el navegador muestra en cada caso de prueba, por lo que cada imagen representa el resultado efectivo de la prueba (página de inicio, dashboard, gestión de usuarios, acceso denegado, clima o cierre de sesión).
 
 Ejemplo de nomenclatura:
 
 ```
-TestHomePage__test_home_page_loads__01_inicio.png
-
 TestHomePage__test_home_page_loads__02_pagina_cargada.png
 
-TestHomePage__test_home_page_loads__02_fin_exitoso.png
+TestAuthenticatedPages__test_dashboard_loads_when_authenticated__03_dashboard_cargado.png
+
+TestAuthenticatedPages__test_usuarios_page_forbidden_for_viewer__03_acceso_denegado_viewer.png
 ```
 
 ---
@@ -455,12 +452,12 @@ Se logró implementar:
 
 * 38 pruebas unitarias para validar componentes individuales.
 * 41 pruebas de integración para validar comunicación entre módulos.
-* 17 pruebas funcionales utilizando Selenium para validar flujos completos del usuario.
+* 12 pruebas funcionales utilizando Selenium para validar flujos completos del usuario.
 
 La ejecución final obtuvo:
 
 ```
-96/96 pruebas aprobadas
+91/91 pruebas aprobadas
 ```
 
 demostrando que las funcionalidades evaluadas trabajan correctamente bajo los escenarios definidos.
