@@ -1,3 +1,4 @@
+
 import os
 import requests
 from functools import wraps
@@ -27,6 +28,11 @@ from models import (
 
 load_dotenv()
 
+
+# ==========================================================
+# CONFIGURACIÓN PRINCIPAL DE LA APLICACIÓN
+# Inicializa Flask, base de datos y Auth0
+# ==========================================================
 
 def create_app(config_overrides=None):
     application = Flask(__name__)
@@ -108,6 +114,11 @@ def create_app(config_overrides=None):
             redirect_uri=os.getenv("AUTH0_CALLBACK_URL"),
             prompt="login",
         )
+
+    # ==========================================================
+# LOGIN CON AUTH0
+# Autentica al usuario, crea la sesión y asigna el rol
+# ==========================================================
 
     @application.route("/callback")
     def callback():
@@ -267,6 +278,11 @@ def create_app(config_overrides=None):
             for r in roles
         ])
 
+    # ==========================================================
+# API DEL CLIMA
+# Consulta el clima actual y guarda el historial
+# ==========================================================
+
     @application.route("/api/clima")
     @login_required
     def api_clima():
@@ -335,6 +351,11 @@ def create_app(config_overrides=None):
         except Exception as e:
             return jsonify({"error": str(e)}), 500
 
+    # ==========================================================
+# API DEL PRONÓSTICO
+# Consulta el pronóstico de varios días
+# ==========================================================
+
     @application.route("/api/pronostico")
     @login_required
     def api_pronostico():
@@ -387,6 +408,11 @@ def create_app(config_overrides=None):
 
         except Exception as e:
             return jsonify({"error": str(e)}), 500
+
+    # ==========================================================
+# API DASHBOARD
+# Calcula indicadores para gráficos y métricas
+# ==========================================================
 
     @application.route("/api/dashboard")
     @login_required
@@ -448,6 +474,11 @@ def create_app(config_overrides=None):
 
     from datetime import datetime
 
+    # ==========================================================
+# API REPORTES
+# Genera el resumen ejecutivo del sistema
+# ==========================================================
+
     @application.route("/api/reportes")
     @login_required
     def api_reportes():
@@ -490,24 +521,44 @@ def create_app(config_overrides=None):
             "conclusion": conclusion
         })
 
+    # ==========================================================
+# API HISTORIAL
+# Devuelve el historial de consultas.
+# El administrador puede ver todos los registros.
+# ==========================================================
     @application.route("/api/historial")
     @login_required
     def api_historial():
+
         usuario_id = session.get("db_user_id")
-        historial = (
-            HistorialConsulta.query
-            .filter_by(user_id=usuario_id)
-            .order_by(HistorialConsulta.fecha_consulta.desc())
-            .all()
-        )
+
+        if has_role("admin"):
+            historial = (
+                HistorialConsulta.query
+                .order_by(HistorialConsulta.fecha_consulta.desc())
+                .all()
+            )
+        else:
+            historial = (
+                HistorialConsulta.query
+                .filter_by(user_id=usuario_id)
+                .order_by(HistorialConsulta.fecha_consulta.desc())
+                .all()
+            )
+
         datos = []
+
         for h in historial:
+
             if h.tipo_consulta.lower() == "clima":
                 accion = "Consultó el clima"
+
             elif h.tipo_consulta.lower() in ["pronóstico", "pronostico"]:
                 accion = "Consultó el pronóstico"
+
             else:
                 accion = h.tipo_consulta
+
             datos.append({
                 "fecha": h.fecha_consulta.strftime("%d/%m/%Y %H:%M"),
                 "usuario": h.usuario.name if h.usuario.name else h.usuario.email,
@@ -516,8 +567,13 @@ def create_app(config_overrides=None):
                 "pais": h.pais,
                 "tipo": h.tipo_consulta
             })
-        return jsonify(datos)
 
+            # ==========================================================
+# API ALERTAS
+# Genera alertas según la última consulta del usuario
+# ==========================================================
+
+        return jsonify(datos)
     @application.route("/api/alertas")
     @login_required
     def api_alertas():
@@ -561,6 +617,12 @@ def create_app(config_overrides=None):
             })
 
         return jsonify({"ciudad": consulta.ciudad, "alertas": alertas})
+
+    
+    # ==========================================================
+# CIERRE DE SESIÓN
+# Elimina la sesión y regresa al inicio
+# ==========================================================
 
     @application.route("/logout")
     def logout():
