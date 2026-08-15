@@ -521,7 +521,7 @@ def create_app(config_overrides=None):
             "conclusion": conclusion
         })
 
-    # ==========================================================
+# ==========================================================
 # API HISTORIAL
 # Devuelve el historial de consultas.
 # El administrador puede ver todos los registros.
@@ -533,12 +533,15 @@ def create_app(config_overrides=None):
         usuario_id = session.get("db_user_id")
 
         if has_role("admin"):
+
             historial = (
                 HistorialConsulta.query
                 .order_by(HistorialConsulta.fecha_consulta.desc())
                 .all()
             )
+
         else:
+
             historial = (
                 HistorialConsulta.query
                 .filter_by(user_id=usuario_id)
@@ -551,82 +554,183 @@ def create_app(config_overrides=None):
         for h in historial:
 
             if h.tipo_consulta.lower() == "clima":
+
                 accion = "Consultó el clima"
 
-            elif h.tipo_consulta.lower() in ["pronóstico", "pronostico"]:
+            elif h.tipo_consulta.lower() in [
+                "pronóstico",
+                "pronostico"
+            ]:
+
                 accion = "Consultó el pronóstico"
 
             else:
+
                 accion = h.tipo_consulta
 
             datos.append({
-                "fecha": h.fecha_consulta.strftime("%d/%m/%Y %H:%M"),
-                "usuario": h.usuario.name if h.usuario.name else h.usuario.email,
+
+                "fecha": h.fecha_consulta.strftime(
+                    "%d/%m/%Y %H:%M"
+                ),
+
+                "usuario": (
+                    h.usuario.name
+                    if h.usuario.name
+                    else h.usuario.email
+                ),
+
                 "accion": accion,
+
                 "ciudad": h.ciudad,
+
                 "pais": h.pais,
+
                 "tipo": h.tipo_consulta
+
             })
 
-            # ==========================================================
-# API ALERTAS
-# Genera alertas según la última consulta del usuario
-# ==========================================================
-
         return jsonify(datos)
+
+        # ==========================================================
+    # API ALERTAS
+    # Genera alertas meteorológicas en tiempo real
+    # ==========================================================
     @application.route("/api/alertas")
     @login_required
     def api_alertas():
-        usuario_id = session.get("db_user_id")
-        consulta = (
-            HistorialConsulta.query
-            .filter_by(user_id=usuario_id)
-            .order_by(HistorialConsulta.fecha_consulta.desc())
-            .first()
-        )
 
-        if not consulta:
-            return jsonify({
-                "error": "Primero debe realizar una consulta del clima."
-            })
+        ciudad = request.args.get("ciudad", "").strip()
 
-        alertas = []
-        if consulta.temperatura >= 35:
-            alertas.append({
-                "nivel": "🔴 Alta",
-                "titulo": "Calor extremo",
-                "descripcion": "La temperatura supera los 35°C."
-            })
-        if consulta.viento >= 60:
-            alertas.append({
-                "nivel": "🟠 Media",
-                "titulo": "Vientos fuertes",
-                "descripcion": "Se detectan vientos fuertes."
-            })
-        if consulta.lluvia >= 50:
-            alertas.append({
-                "nivel": "🔵 Media",
-                "titulo": "Lluvias intensas",
-                "descripcion": "Existe riesgo de lluvias intensas."
-            })
-        if not alertas:
-            alertas.append({
-                "nivel": "🟢 Baja",
-                "titulo": "Sin alertas",
-                "descripcion": "No se detectan riesgos ambientales."
-            })
+        if not ciudad:
+            return jsonify(
+                {"error": "Debe indicar una ciudad."}
+            ), 400
 
-        return jsonify({"ciudad": consulta.ciudad, "alertas": alertas})
+        try:
 
-    
+            geo_url = (
+                "https://geocoding-api.open-meteo.com/v1/search"
+                f"?name={ciudad}&count=10&language=es&format=json"
+            )
+
+            geo = requests.get(geo_url, timeout=10).json()
+
+            if "results" not in geo:
+                return jsonify(
+                    {"error": "Ciudad no encontrada."}
+                ), 404
+
+            lugar = geo["results"][0]
+
+            if ciudad.lower() in ["san jose", "san josé"]:
+
+                for resultado in geo["results"]:
+
+                    if (
+                        resultado.get("country", "").lower()
+                        == "costa rica"
+                    ):
+                        lugar = resultado
+                        break
+
+            latitud = lugar["latitude"]
+            longitud = lugar["longitude"]
+
+            clima_url = (
+                "https://api.open-meteo.com/v1/forecast"
+                f"?latitude={latitud}&longitude={longitud}"
+                "&current=temperature_2m,"
+                "precipitation,"
+                "wind_speed_10m,"
+                "relative_humidity_2m"
+            )
+
+            clima = requests.get(
+                clima_url,
+                timeout=10
+            ).json()
+
+            actual = clima["current"]
+
+            temperatura = actual["temperature_2m"]
+            viento = actual["wind_speed_10m"]
+            lluvia = actual["precipitation"]
+            humedad = actual["relative_humidity_2m"]
+
+            alertas = []
+
+            if temperatura >= 30:
+
+                alertas.append(
+                    {
+                        "nivel": "🔴 Alta",
+                        "titulo": "Temperatura elevada",
+                        "descripcion": f"Temperatura actual: {temperatura} °C."
+                    }
+                )
+
+            if viento >= 25:
+
+                alertas.append(
+                    {
+                        "nivel": "🟠 Media",
+                        "titulo": "Vientos fuertes",
+                        "descripcion": f"Velocidad del viento: {viento} km/h."
+                    }
+                )
+
+            if lluvia >= 5:
+
+                alertas.append(
+                    {
+                        "nivel": "🔵 Media",
+                        "titulo": "Lluvias intensas",
+                        "descripcion": f"Precipitación actual: {lluvia} mm."
+                    }
+                )
+
+            if humedad >= 90:
+
+                alertas.append(
+                    {
+                        "nivel": "🟡 Baja",
+                        "titulo": "Humedad elevada",
+                        "descripcion": f"Humedad actual: {humedad}%."
+                    }
+                )
+
+            if not alertas:
+
+                alertas.append(
+                    {
+                        "nivel": "🟢 Baja",
+                        "titulo": "Sin alertas",
+                        "descripcion": "No se detectan riesgos ambientales."
+                    }
+                )
+
+            return jsonify(
+                {
+                    "ciudad": lugar["name"],
+                    "alertas": alertas
+                }
+            )
+
+        except Exception as e:
+
+            return jsonify(
+                {"error": str(e)}
+            ), 500
     # ==========================================================
-# CIERRE DE SESIÓN
-# Elimina la sesión y regresa al inicio
-# ==========================================================
-
+    # CIERRE DE SESIÓN
+    # Elimina la sesión y regresa al inicio
+    # ==========================================================
     @application.route("/logout")
     def logout():
+
         session.clear()
+
         return redirect(url_for("home"))
 
     return application
